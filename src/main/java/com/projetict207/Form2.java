@@ -13,11 +13,11 @@ public class Form2 {
     /**
      * MISSION POUR JEMINA (LOT B) ET ELISÉE (LOT C)
      * 
-     * Jemina : Ton rôle est de créer les champs de saisie (Nom, Prénom, Note) 
+     * Jemina : Ton rôle est de créer les champs de saisie (Matricule, Nom, Prénom, Note, Filière, Niveau) 
      * et le bouton pour ajouter un étudiant.
      * 
      * Elisée : Ton rôle est de créer le tableau (TableView) pour afficher 
-     * la liste des étudiants.
+     * la liste des étudiants avec toutes leurs informations.
      * 
      * Trecy (LOT A) a déjà créé la classe Etudiant.java que vous allez utiliser.
      */
