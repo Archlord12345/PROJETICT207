@@ -6,11 +6,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Callback;
+import javafx.application.Platform;
 
 import java.util.List;
 
@@ -111,24 +111,31 @@ public class Form2 {
         notesTable = new TableView<>();
         
         TableColumn<DatabaseConnector.NoteDetail, String> colMatricule = new TableColumn<>("Matricule");
-        colMatricule.setCellValueFactory(new PropertyValueFactory<>("matricule"));
+        colMatricule.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().matricule));
         
         TableColumn<DatabaseConnector.NoteDetail, String> colNom = new TableColumn<>("Nom Complet");
         colNom.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEtudiantNomComplet()));
         
+        TableColumn<DatabaseConnector.NoteDetail, String> colFiliere = new TableColumn<>("Filière");
+        colFiliere.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().filiereCode));
+
+        TableColumn<DatabaseConnector.NoteDetail, String> colNiveau = new TableColumn<>("Niveau");
+        colNiveau.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().niveauCode));
+
         TableColumn<DatabaseConnector.NoteDetail, String> colUE = new TableColumn<>("Code UE");
-        colUE.setCellValueFactory(new PropertyValueFactory<>("ueCode"));
+        colUE.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().ueCode));
         
         TableColumn<DatabaseConnector.NoteDetail, String> colEval = new TableColumn<>("Type");
-        colEval.setCellValueFactory(new PropertyValueFactory<>("typeEvalCode"));
+        colEval.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().typeEvalCode));
         
-        TableColumn<DatabaseConnector.NoteDetail, Double> colVal = new TableColumn<>("Note");
-        colVal.setCellValueFactory(new PropertyValueFactory<>("valeur"));
+        TableColumn<DatabaseConnector.NoteDetail, String> colVal = new TableColumn<>("Note");
+        colVal.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(String.valueOf(data.getValue().valeur)));
         
         TableColumn<DatabaseConnector.NoteDetail, String> colStatut = new TableColumn<>("Statut");
-        colStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
+        colStatut.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().statut));
 
-        notesTable.getColumns().addAll(colMatricule, colNom, colUE, colEval, colVal, colStatut);
+        notesTable.getColumns().clear();
+        notesTable.getColumns().addAll(colMatricule, colNom, colFiliere, colNiveau, colUE, colEval, colVal, colStatut);
         notesTable.setItems(notesList);
         notesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
@@ -233,7 +240,7 @@ public class Form2 {
                 statusLabel.setText("✓ Note enregistrée !");
                 statusLabel.setStyle("-fx-text-fill: green;");
                 noteField.clear();
-                refreshTable();
+                Platform.runLater(() -> refreshTable());
             } else {
                 statusLabel.setText("Erreur lors de l'enregistrement en BD.");
                 statusLabel.setStyle("-fx-text-fill: red;");
