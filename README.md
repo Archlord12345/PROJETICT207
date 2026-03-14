@@ -1,44 +1,44 @@
-# JavaFX Project with SQLite
+# Projet JavaFX avec SQLite
 
-This is a JavaFX application with three interconnected forms (Form1, Form2, Form3) and SQLite database integration.
+Il s'agit d'une application JavaFX avec trois formulaires interconnectés (Form1, Form2, Form3) et une intégration de base de données SQLite.
 
-## Prerequisites
+## Prérequis
 
-- Java 11 or higher
-- Maven 3.6 or higher
+- Java 11 ou supérieur
+- Maven 3.6 ou supérieur
 
-## How to Launch the Project
+## Comment lancer le projet
 
-1. **Navigate to the project directory:**
+1. **Naviguer vers le répertoire du projet :**
    ```
    cd /home/ravel/Documents/CODES/PROJETICT207
    ```
 
-2. **Compile and run the application:**
+2. **Compiler et exécuter l'application :**
    ```
    mvn clean install
    mvn javafx:run
    ```
 
-   Alternatively, you can run directly:
+   Alternativement, vous pouvez exécuter directement :
    ```
    mvn javafx:run
    ```
 
-## Project Structure
+## Structure du projet
 
-- `src/main/java/com/projetict207/` - Main source code
-  - `App.java` - Main application class
-  - `Form1.java`, `Form2.java`, `Form3.java` - Form classes
-  - `DatabaseConnector.java` - SQLite database connection utility
+- `src/main/java/com/projetict207/` - Code source principal
+  - `App.java` - Classe principale de l'application
+  - `Form1.java`, `Form2.java`, `Form3.java` - Classes de formulaires
+  - `DatabaseConnector.java` - Utilitaire de connexion à la base de données SQLite
 
-- `pom.xml` - Maven configuration with JavaFX and SQLite dependencies
+- `pom.xml` - Configuration Maven avec les dépendances JavaFX et SQLite
 
-## Features
+## Fonctionnalités
 
-- Three forms: Form1 (start, with buttons to Form2 and Form3), Form2 (back to Form1), Form3 (back to Form1)
-- SQLite database connection ready for use
+- Trois formulaires : Form1 (départ, avec des boutons vers Form2 et Form3), Form2 (retour à Form1), Form3 (retour à Form1)
+- Connexion à la base de données SQLite prête à l'emploi
 
-## Database
+## Base de données
 
-The application uses SQLite. The database file `database.db` will be created automatically in the project root if it doesn't exist. The `DatabaseConnector` class includes a method to create a sample `users` table.
+L'application utilise SQLite. Le fichier de base de données `database.db` sera créé automatiquement à la racine du projet s'il n'existe pas. La classe `DatabaseConnector` inclut une méthode pour créer un exemple de table `users`.
