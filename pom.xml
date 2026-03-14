@@ -6,7 +6,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>javafx-project</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1-test-TP</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
