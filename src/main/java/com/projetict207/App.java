@@ -11,8 +11,9 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         primaryStage = stage;
+        DatabaseConnector.initDatabase();
         showForm1();
-        stage.setTitle("JavaFX App");
+        stage.setTitle("JavaFX App : GESTION DES NOTES ICT-L2");
         stage.setMaximized(true);
         stage.show();
     }
