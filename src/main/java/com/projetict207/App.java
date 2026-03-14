@@ -7,14 +7,23 @@ import javafx.stage.Stage;
 public class App extends Application {
 
     private static Stage primaryStage;
+    private static DatabaseConnector.User currentUser;
 
     @Override
     public void start(Stage stage) {
         primaryStage = stage;
         showForm1();
-        stage.setTitle("JavaFX App");
+        stage.setTitle("Gestion des Notes - UY1");
         stage.setMaximized(true);
         stage.show();
+    }
+
+    public static void setCurrentUser(DatabaseConnector.User user) {
+        currentUser = user;
+    }
+
+    public static DatabaseConnector.User getCurrentUser() {
+        return currentUser;
     }
 
     public static void showForm1() {
