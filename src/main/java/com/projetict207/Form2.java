@@ -7,130 +7,240 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.util.Callback;
+
+import java.util.List;
 
 public class Form2 {
 
-    // Liste partagée (Trecy / Elisée / Jemina)
-    private static final ObservableList<Etudiant> listeEtudiants = FXCollections.observableArrayList();
+    private static ComboBox<DatabaseConnector.Filiere> filiereCombo;
+    private static ComboBox<DatabaseConnector.Niveau> niveauCombo;
+    private static ComboBox<DatabaseConnector.UE> ueCombo;
+    private static ComboBox<DatabaseConnector.TypeEvaluation> typeEvalCombo;
+    private static ComboBox<DatabaseConnector.Etudiant> etudiantCombo;
+    private static TextField noteField;
+    private static Label statusLabel;
+    
+    private static TableView<DatabaseConnector.NoteDetail> notesTable;
+    private static final ObservableList<DatabaseConnector.NoteDetail> notesList = FXCollections.observableArrayList();
 
     public static Scene getScene() {
+        DatabaseConnector.User user = App.getCurrentUser();
+        if (user == null) {
+            // Sécurité au cas où
+            return new Scene(new StackPane(new Label("Session expirée")), 400, 300);
+        }
+
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
         root.setStyle("-fx-background-color: #f4f7f6;");
 
-        // --- SECTION JEMINA : Saisie des notes (LOT B) ---
-        VBox inputArea = new VBox(15);
-        inputArea.setPadding(new Insets(0, 0, 20, 0));
+        // --- HEADER ---
+        HBox header = new HBox(20);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(0, 0, 20, 0));
+
+        Label titre = new Label("Espace Enseignant : Saisie et Visualisation");
+        titre.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
         
-        Label titre = new Label("Espace Professeur : Saisie des Notes");
-        titre.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        // On utilise un GridPane pour un alignement propre des champs de Jemina
+        Label userInfo = new Label("Connecté en tant que : " + user.fullName);
+        userInfo.setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;");
+        
+        header.getChildren().addAll(titre, spacer, userInfo);
+        root.setTop(header);
+
+        // --- SECTION GAUCHE : Formulaire de Saisie (Fusion Lead + Jemina) ---
+        VBox leftSection = new VBox(15);
+        leftSection.setPrefWidth(350);
+        leftSection.setPadding(new Insets(10));
+        leftSection.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #dcdde1; -fx-border-radius: 10;");
+
+        Label formTitle = new Label("Nouvelle Note");
+        formTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
-        grid.setPadding(new Insets(10));
-        grid.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #dcdde1; -fx-border-radius: 10;");
 
-        TextField txtMatricule = new TextField(); txtMatricule.setPromptText("Ex: MY123");
-        TextField txtNom = new TextField(); txtNom.setPromptText("Nom de l'étudiant");
-        TextField txtPrenom = new TextField(); txtPrenom.setPromptText("Prénom");
-        TextField txtNote = new TextField(); txtNote.setPromptText("Note (ex: 15.5)");
-        TextField txtFiliere = new TextField(); txtFiliere.setPromptText("Ex: ICT4D");
-        TextField txtNiveau = new TextField(); txtNiveau.setPromptText("Ex: L2");
+        filiereCombo = createComboBox("Filière", 200);
+        filiereCombo.setOnAction(e -> loadNiveauxAndUEs());
+        
+        niveauCombo = createComboBox("Niveau", 200);
+        niveauCombo.setOnAction(e -> loadUEsAndEtudiants());
+        
+        ueCombo = createComboBox("UE", 200);
+        ueCombo.setOnAction(e -> refreshTable());
+        
+        typeEvalCombo = createComboBox("Type Eval.", 200);
+        etudiantCombo = createComboBox("Étudiant", 200);
+        
+        noteField = new TextField();
+        noteField.setPromptText("Note / 20");
 
-        grid.add(new Label("Matricule:"), 0, 0); grid.add(txtMatricule, 1, 0);
-        grid.add(new Label("Nom:"), 0, 1);       grid.add(txtNom, 1, 1);
-        grid.add(new Label("Prénom:"), 2, 0);    grid.add(txtPrenom, 3, 0);
-        grid.add(new Label("Note:"), 2, 1);      grid.add(txtNote, 3, 1);
-        grid.add(new Label("Filière:"), 4, 0);   grid.add(txtFiliere, 5, 0);
-        grid.add(new Label("Niveau:"), 4, 1);    grid.add(txtNiveau, 5, 1);
+        int row = 0;
+        grid.add(new Label("Filière:"), 0, row); grid.add(filiereCombo, 1, row++);
+        grid.add(new Label("Niveau:"), 0, row); grid.add(niveauCombo, 1, row++);
+        grid.add(new Label("UE:"), 0, row);     grid.add(ueCombo, 1, row++);
+        grid.add(new Label("Évaluation:"), 0, row); grid.add(typeEvalCombo, 1, row++);
+        grid.add(new Label("Étudiant:"), 0, row); grid.add(etudiantCombo, 1, row++);
+        grid.add(new Label("Note:"), 0, row);     grid.add(noteField, 1, row++);
 
-        Button btnAjouter = new Button("Enregistrer l'étudiant");
-        btnAjouter.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20;");
+        Button btnEnregistrer = new Button("Enregistrer la note");
+        btnEnregistrer.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20;");
+        btnEnregistrer.setMaxWidth(Double.MAX_VALUE);
+        btnEnregistrer.setOnAction(e -> saveNote());
 
-        btnAjouter.setOnAction(e -> {
-            try {
-                int id = listeEtudiants.size() + 1;
-                String matricule = txtMatricule.getText();
-                String nom = txtNom.getText();
-                String prenom = txtPrenom.getText();
-                double note = Double.parseDouble(txtNote.getText());
-                String filiere = txtFiliere.getText();
-                String niveau = txtNiveau.getText();
+        statusLabel = new Label();
+        statusLabel.setWrapText(true);
 
-                Etudiant etudiant = new Etudiant(id, matricule, nom, prenom, note, filiere, niveau);
-                listeEtudiants.add(etudiant);
+        leftSection.getChildren().addAll(formTitle, grid, btnEnregistrer, statusLabel);
 
-                // Nettoyage des champs
-                txtMatricule.clear(); txtNom.clear(); txtPrenom.clear();
-                txtNote.clear(); txtFiliere.clear(); txtNiveau.clear();
-            } catch (NumberFormatException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR, "Veuillez entrer une note valide !");
-                alert.show();
+        // --- SECTION CENTRE : Tableau des Notes (Elisée + Lead) ---
+        VBox centerSection = new VBox(10);
+        centerSection.setPadding(new Insets(0, 0, 0, 20));
+        
+        Label tableTitle = new Label("Notes enregistrées pour l'UE sélectionnée");
+        tableTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
+
+        notesTable = new TableView<>();
+        
+        TableColumn<DatabaseConnector.NoteDetail, String> colMatricule = new TableColumn<>("Matricule");
+        colMatricule.setCellValueFactory(new PropertyValueFactory<>("matricule"));
+        
+        TableColumn<DatabaseConnector.NoteDetail, String> colNom = new TableColumn<>("Nom Complet");
+        colNom.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEtudiantNomComplet()));
+        
+        TableColumn<DatabaseConnector.NoteDetail, String> colUE = new TableColumn<>("Code UE");
+        colUE.setCellValueFactory(new PropertyValueFactory<>("ueCode"));
+        
+        TableColumn<DatabaseConnector.NoteDetail, String> colEval = new TableColumn<>("Type");
+        colEval.setCellValueFactory(new PropertyValueFactory<>("typeEvalCode"));
+        
+        TableColumn<DatabaseConnector.NoteDetail, Double> colVal = new TableColumn<>("Note");
+        colVal.setCellValueFactory(new PropertyValueFactory<>("valeur"));
+        
+        TableColumn<DatabaseConnector.NoteDetail, String> colStatut = new TableColumn<>("Statut");
+        colStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
+
+        notesTable.getColumns().addAll(colMatricule, colNom, colUE, colEval, colVal, colStatut);
+        notesTable.setItems(notesList);
+        notesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        centerSection.getChildren().addAll(tableTitle, notesTable);
+        
+        // Assemblage final
+        HBox mainContent = new HBox(leftSection, centerSection);
+        HBox.setHgrow(centerSection, Priority.ALWAYS);
+        root.setCenter(mainContent);
+
+        // --- FOOTER ---
+        Button btnLogout = new Button("Se déconnecter");
+        btnLogout.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white;");
+        btnLogout.setOnAction(e -> {
+            App.setCurrentUser(null);
+            App.showForm1();
+        });
+        
+        root.setBottom(new HBox(btnLogout));
+        BorderPane.setMargin(root.getBottom(), new Insets(20, 0, 0, 0));
+
+        // Chargement initial
+        loadInitialData();
+
+        return new Scene(root, 1100, 700);
+    }
+
+    private static <T> ComboBox<T> createComboBox(String prompt, double width) {
+        ComboBox<T> combo = new ComboBox<>();
+        combo.setPromptText(prompt);
+        combo.setPrefWidth(width);
+        
+        // CellFactory pour afficher correctement les libellés des objets du Lead
+        combo.setCellFactory(lv -> new ListCell<T>() {
+            @Override
+            protected void updateItem(T item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) setText(null);
+                else if (item instanceof DatabaseConnector.Filiere) setText(((DatabaseConnector.Filiere)item).getLibelle());
+                else if (item instanceof DatabaseConnector.Niveau) setText(((DatabaseConnector.Niveau)item).getLibelle());
+                else if (item instanceof DatabaseConnector.UE) setText(((DatabaseConnector.UE)item).getLibelle());
+                else if (item instanceof DatabaseConnector.TypeEvaluation) setText(((DatabaseConnector.TypeEvaluation)item).getLibelle());
+                else if (item instanceof DatabaseConnector.Etudiant) setText(((DatabaseConnector.Etudiant)item).getDisplayName());
             }
         });
-
-        HBox wrapperBtn = new HBox(btnAjouter);
-        wrapperBtn.setAlignment(Pos.CENTER_RIGHT);
+        // Bouton de sélection aussi
+        combo.setButtonCell(combo.getCellFactory().call(null));
         
-        inputArea.getChildren().addAll(titre, grid, wrapperBtn);
-        root.setTop(inputArea);
+        return combo;
+    }
 
+    private static void loadInitialData() {
+        filiereCombo.setItems(FXCollections.observableArrayList(DatabaseConnector.getFilieres()));
+        typeEvalCombo.setItems(FXCollections.observableArrayList(DatabaseConnector.getTypesEvaluation()));
+    }
 
-        // --- SECTION ELISÉE : Tableau des notes (LOT C) ---
-        VBox tableArea = new VBox(10);
-        Label tableTitle = new Label("Liste des Notes Enregistrées");
-        tableTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #34495e;");
-        tableArea.getChildren().add(tableTitle);
+    private static void loadNiveauxAndUEs() {
+        DatabaseConnector.Filiere f = filiereCombo.getValue();
+        if (f != null) {
+            niveauCombo.setItems(FXCollections.observableArrayList(DatabaseConnector.getNiveaux()));
+        }
+    }
 
-        TableView<Etudiant> monTableView = new TableView<>();
+    private static void loadUEsAndEtudiants() {
+        DatabaseConnector.Filiere f = filiereCombo.getValue();
+        DatabaseConnector.Niveau n = niveauCombo.getValue();
+        if (f != null && n != null) {
+            ueCombo.setItems(FXCollections.observableArrayList(DatabaseConnector.getUnitesEnseignementByFiliereNiveau(f.id, n.id)));
+            etudiantCombo.setItems(FXCollections.observableArrayList(DatabaseConnector.getEtudiantsByFiliereNiveau(f.id, n.id)));
+        }
+    }
 
-        TableColumn<Etudiant, Integer> colId = new TableColumn<>("ID");
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colId.setPrefWidth(50);
-
-        TableColumn<Etudiant, String> colMatricule = new TableColumn<>("Matricule");
-        colMatricule.setCellValueFactory(new PropertyValueFactory<>("matricule"));
-
-        TableColumn<Etudiant, String> colNom = new TableColumn<>("Nom");
-        colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
-
-        TableColumn<Etudiant, String> colPrenom = new TableColumn<>("Prénom");
-        colPrenom.setCellValueFactory(new PropertyValueFactory<>("prenom"));
-
-        TableColumn<Etudiant, Double> colNote = new TableColumn<>("Note");
-        colNote.setCellValueFactory(new PropertyValueFactory<>("note"));
-
-        TableColumn<Etudiant, String> colFiliere = new TableColumn<>("Filière");
-        colFiliere.setCellValueFactory(new PropertyValueFactory<>("filiere"));
-
-        TableColumn<Etudiant, String> colNiveau = new TableColumn<>("Niveau");
-        colNiveau.setCellValueFactory(new PropertyValueFactory<>("niveau"));
-
-        monTableView.getColumns().addAll(colId, colMatricule, colNom, colPrenom, colNote, colFiliere, colNiveau);
-        monTableView.setItems(listeEtudiants);
-        monTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        tableArea.getChildren().add(monTableView);
-        root.setCenter(tableArea);
-
-
-        // --- Footer ---
-        Button backToForm1 = new Button("Déconnexion");
-        backToForm1.setOnAction(e -> App.showForm1());
-        backToForm1.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white;");
+    private static void refreshTable() {
+        DatabaseConnector.Filiere f = filiereCombo.getValue();
+        DatabaseConnector.Niveau n = niveauCombo.getValue();
+        DatabaseConnector.UE ue = ueCombo.getValue();
         
-        HBox footer = new HBox(backToForm1);
-        footer.setPadding(new Insets(20, 0, 0, 0));
-        footer.setAlignment(Pos.CENTER_LEFT);
+        notesList.clear();
+        Integer fid = (f != null) ? f.id : null;
+        Integer nid = (n != null) ? n.id : null;
+        Integer uid = (ue != null) ? ue.id : null;
         
-        root.setBottom(footer);
+        notesList.addAll(DatabaseConnector.getNotes(fid, nid, uid));
+    }
 
-        return new Scene(root, 1000, 700);
+    private static void saveNote() {
+        try {
+            DatabaseConnector.UE ue = ueCombo.getValue();
+            DatabaseConnector.TypeEvaluation te = typeEvalCombo.getValue();
+            DatabaseConnector.Etudiant et = etudiantCombo.getValue();
+            double val = Double.parseDouble(noteField.getText());
+            DatabaseConnector.User user = App.getCurrentUser();
+
+            if (ue == null || te == null || et == null) {
+                statusLabel.setText("Erreur : Remplissez tous les champs !");
+                statusLabel.setStyle("-fx-text-fill: red;");
+                return;
+            }
+
+            boolean ok = DatabaseConnector.saveNote(et.id, ue.id, te.id, user.id, val);
+            if (ok) {
+                statusLabel.setText("✓ Note enregistrée !");
+                statusLabel.setStyle("-fx-text-fill: green;");
+                noteField.clear();
+                refreshTable();
+            } else {
+                statusLabel.setText("Erreur lors de l'enregistrement en BD.");
+                statusLabel.setStyle("-fx-text-fill: red;");
+            }
+        } catch (NumberFormatException e) {
+            statusLabel.setText("Note invalide !");
+            statusLabel.setStyle("-fx-text-fill: red;");
+        }
     }
 }
