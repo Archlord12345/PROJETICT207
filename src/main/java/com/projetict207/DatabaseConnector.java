@@ -194,6 +194,19 @@ public class DatabaseConnector {
         }
     }
 
+    public static boolean updateNote(int noteId, double newValue) {
+        String sql = "UPDATE notes SET valeur = ?, statut = 'SAISIE' WHERE id = ?";
+        try (Connection conn = getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDouble(1, newValue);
+            pstmt.setInt(2, noteId);
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Erreur mise à jour note: " + e.getMessage());
+            return false;
+        }
+    }
+
     public static PVResult generatePV(int ueId, int semestreId, String anneeAcademique, int generePar) {
         String sql = "SELECT e.matricule, e.nom, e.prenom, f.code as filiere_code, nv.code as niveau_code, " +
                      "ue.code as ue_code, ue.nom as ue_nom, " +
