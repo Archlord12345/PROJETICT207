@@ -68,6 +68,19 @@ public class Form1 {
 
         testBox.getChildren().addAll(testTitle, prof, admin);
 
+        loginBtn.setOnAction(e -> {
+            String user = username.getText();
+            String pass = password.getText();
+
+            if (user.equals("prof1") && pass.equals("1234")) {
+                App.showForm2();
+            } else if (user.equals("admin") && pass.equals("1234")) {
+                App.showForm3();
+            } else {
+                System.out.println("Identifiants incorrects !");
+            }
+        });
+
         formBox.getChildren().addAll(
                 loginTitle,
                 userLabel,
